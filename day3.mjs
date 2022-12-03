@@ -10,42 +10,35 @@ CrZsJsPPZsGzwwsLwLmpwMDw`;
 let puzzle = sample;
 const dataBuf = await promises.readFile("input3");
 puzzle = dataBuf.toString();
-const sacks = puzzle
-  .split("\n")
-  .filter((line) => Boolean(line))
-  .map((sack) => [sack.slice(0, sack.length / 2), sack.slice(sack.length / 2)]);
+const sacks = puzzle.split("\n").filter((line) => Boolean(line));
 
-function score(foo) {
-  let code = foo.charCodeAt(0) - "a".charCodeAt() + 1;
+function score(c) {
+  let code = c.charCodeAt() - "a".charCodeAt() + 1;
   if (code < 1) {
-    code = foo.charCodeAt(0) - "A".charCodeAt() + 27;
+    code = c.charCodeAt() - "A".charCodeAt() + 27;
   }
-  // console.log(foo, code);
   return code;
 }
 
 const part1 = sacks
   .map((sack) => {
-    const foo = sack[0]
-      .split("")
-      .filter((c) => sack[1].indexOf(c) != -1)
+    // split first half of string into char array, and filter if in second half.
+    const foo = [...sack.slice(0, sack.length / 2)]
+      .filter((c) => new Set(sack.slice(sack.length / 2)).has(c))
       .pop();
     return score(foo);
   })
   .reduce((a, b) => a + b);
 
-//console.log(sacks);
-
-console.log();
 console.log("#1", part1);
 
 let part2 = 0;
+// I don't know how to functionally partition.
 for (let i = 0; i < sacks.length; i += 3) {
-  const group = sacks.slice(i, i + 3).map((h) => h.join(""));
-  //console.log(group);
-  for (const c of group[0].split("")) {
-    if (group[1].indexOf(c) != -1 && group[2].indexOf(c) != -1) {
-      //console.log(c);
+  const group = sacks.slice(i, i + 3).map((a) => new Set(a));
+
+  for (const c of group[0]) {
+    if (group[1].has(c) && group[2].has(c)) {
       part2 += score(c);
       break;
     }
