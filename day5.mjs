@@ -53,7 +53,7 @@ moves.forEach(([num, from, to]) => {
   }
 });
 
-let part1 = stacksPart1.map((arr) => arr.slice(-1).pop()).join("");
+let part1 = stacksPart1.map((arr) => arr.at(-1)).join("");
 console.log("#1", part1);
 
 // part 2
@@ -62,5 +62,5 @@ moves.forEach(([num, from, to]) => {
   stacks[to - 1].push(...stacks[from - 1].splice(-num));
 });
 
-let part2 = stacks.map((arr) => arr.slice(-1).pop()).join("");
+let part2 = stacks.map((arr) => arr.at(-1)).join("");
 console.log("#2", part2);

@@ -10,30 +10,24 @@ const signal = puzzle
   .filter((line) => Boolean(line))
   .at(0);
 
-console.log(signal);
-
 let part1 = 0;
+let part2 = 0;
+
 for (let i = 4; i < signal.length; i++) {
   let snip = signal.slice(i - 4, i);
-  //console.log(snip);
-  if (new Set(snip.split("")).size == 4) {
-    console.log(i, snip);
+  if (!part1 && new Set([...snip]).size == 4) {
+    //console.log(i, snip);
     part1 = i;
-    break;
+  }
+  if (i >= 14) {
+    let snip = signal.slice(i - 14, i);
+    if (new Set([...snip]).size == 14) {
+      //console.log(i, snip);
+      part2 = i;
+      break;
+    }
   }
 }
 
 console.log("#1:", part1);
-
-let part2 = 0;
-for (let i = 14; i < signal.length; i++) {
-  let snip = signal.slice(i - 14, i);
-  //console.log(snip);
-  if (new Set(snip.split("")).size == 14) {
-    console.log(i, snip);
-    part2 = i;
-    break;
-  }
-}
-
 console.log("#2:", part2);
