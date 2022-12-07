@@ -33,6 +33,7 @@ const io = puzzle.split("\n").filter((line) => Boolean(line));
 const stack = new Array();
 const filePositions = new Map();
 const fileBytes = new Map();
+const dirSize = new Map();
 io.forEach((line) => {
   // no-op
   if (line == "$ ls" || line.startsWith("dir")) return;
@@ -54,9 +55,31 @@ io.forEach((line) => {
     const [bytes, filename] = line.split(" ");
     filePositions.set(filename, loc);
     fileBytes.set(loc + "/" + filename, Number(bytes));
+    let path = "";
+    for (const d of stack) {
+      path += d;
+      dirSize.set(path, (dirSize.get(path) ?? 0) + Number(bytes));
+    }
   }
 });
 
+let part1b = 0;
+for (const size of dirSize.values()) {
+  if (size <= 100_000) part1b += size;
+}
+console.log("#1b:", part1b);
+
+console.log();
+const need = dirSize.get("/") - (70_000_000 - 30_000_000);
+console.log("need", need);
+
+const part2 = [...dirSize.values()]
+  .filter((size) => size >= need)
+  .sort((a, b) => a - b)
+  .at(0);
+console.log("#2:", part2);
+
+/*
 //console.log(stack);
 //console.log(filePositions);
 //console.log(fileBytes);
@@ -79,7 +102,7 @@ function dirSum(dir) {
     return (
       total +
       (fileBytes.has(fileLoc) ? fileBytes.get(fileLoc) : dirSum(fileLoc))
-    );
+    ); // aha!  this over-counts /a/b/c/d.txt cuz adds d recrusively each time.
   }, 0);
   return result;
 }
@@ -94,3 +117,4 @@ for (const dir of dirs) {
   }
 }
 console.log("#1: ", part1); // 849976 low, 1085928 high
+*/
