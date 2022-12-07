@@ -43,15 +43,17 @@ io.forEach((line) => {
     if (dir == "..") {
       stack.pop();
     } else {
+      const loc = stack.join("/");
       // record directory location
-      filePositions.set(dir, stack.at(-1));
+      filePositions.set(dir, loc);
       stack.push(dir);
     }
   } else {
     // record file position and size
+    const loc = stack.join("/");
     const [bytes, filename] = line.split(" ");
-    filePositions.set(filename, stack.at(-1));
-    fileBytes.set(filename, Number(bytes));
+    filePositions.set(filename, loc);
+    fileBytes.set(loc + "/" + filename, Number(bytes));
   }
 });
 
@@ -59,7 +61,7 @@ io.forEach((line) => {
 //console.log(filePositions);
 //console.log(fileBytes);
 const dirs = new Set([...filePositions.values()].filter((e) => Boolean(e)));
-//console.log(dirs);
+console.log(dirs);
 
 let part1 = 0;
 
@@ -73,14 +75,22 @@ function dirSum(dir) {
   let result = 0;
   result += dirContents.reduce((total, file) => {
     //console.log("red", total, file);
-    return total + (fileBytes.has(file) ? fileBytes.get(file) : dirSum(file));
+    const fileLoc = dir + "/" + file;
+    return (
+      total +
+      (fileBytes.has(fileLoc) ? fileBytes.get(fileLoc) : dirSum(fileLoc))
+    );
   }, 0);
   return result;
 }
 
+console.log(dirSum("//d"));
+
 for (const dir of dirs) {
   const amt = dirSum(dir);
-  console.log(dir, amt);
-  if (amt <= 100_000) part1 += amt;
+  if (amt <= 100_000) {
+    console.log(dir, amt);
+    part1 += amt;
+  }
 }
-console.log("#1: ", part1); // 849976 low
+console.log("#1: ", part1); // 849976 low, 1085928 high
