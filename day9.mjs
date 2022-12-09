@@ -34,70 +34,42 @@ const moves = puzzle
   .map((move) => move.split(" "));
 moves.forEach((move) => (move[1] = Number(move[1])));
 
-let pos = { x: 0, y: 0 };
-let tail = { x: 0, y: 0 };
-let visited = new Set();
-for (const move of moves) {
-  console.log(move, pos, tail);
-  const [dx, dy] = DIRS[move[0]];
-  const dist = move[1];
-  //console.log(dx, dy, dist);
-  for (let i = 0; i < dist; i++) {
-    pos.x += dx;
-    pos.y += dy;
-    if (pos.y == tail.y) {
-      if (Math.abs(pos.x - tail.x) > 1) tail.x += dx;
-    } else if (pos.x == tail.x) {
-      if (Math.abs(pos.y - tail.y) > 1) tail.y += dy;
-    } else if (Math.abs(pos.y - tail.y) == 1 && Math.abs(pos.x - tail.x) == 1) {
-      continue;
-    } else {
-      tail.y += pos.y > tail.y ? 1 : -1;
-      tail.x += pos.x > tail.x ? 1 : -1;
-    }
-    visited.add(tail.y * 100_000 + tail.x);
-  }
-}
-console.log("#1:", visited.size);
-
-// part2, urk
-const rope = new Array(10).fill(0).map((_) => new Object({ x: 0, y: 0 }));
-let part2 = new Set();
-for (const move of moves) {
-  console.log(move, rope[0], rope[9]);
-  const [dx, dy] = DIRS[move[0]];
-  const dist = move[1];
-  const debug = false && move[0] == "L" && dist == 8;
-  if (debug) console.log("start", rope);
-  //console.log(dx, dy, dist);
-  for (let i = 0; i < dist; i++) {
-    rope[0].x += dx;
-    rope[0].y += dy;
-    if (debug) {
-      console.log("step", i, dx, dy);
-    }
-    for (let j = 1; j < rope.length; j++) {
-      if (rope[j - 1].y == rope[j].y) {
-        if (Math.abs(rope[j - 1].x - rope[j].x) == 2)
-          rope[j].x += rope[j - 1].x > rope[j].x ? 1 : -1;
-      } else if (rope[j - 1].x == rope[j].x) {
-        if (Math.abs(rope[j - 1].y - rope[j].y) == 2)
+function moveRope(knots) {
+  // initialize rope to `knots` length
+  const rope = new Array(knots).fill(0).map((_) => new Object({ x: 0, y: 0 }));
+  let visited = new Set();
+  for (const move of moves) {
+    const [dx, dy] = DIRS[move[0]];
+    const dist = move[1];
+    for (let i = 0; i < dist; i++) {
+      // move head
+      rope[0].x += dx;
+      rope[0].y += dy;
+      // move rest of rope
+      for (let j = 1; j < rope.length; j++) {
+        if (rope[j - 1].y == rope[j].y) {
+          // move horizontally
+          if (Math.abs(rope[j - 1].x - rope[j].x) > 1)
+            rope[j].x += rope[j - 1].x > rope[j].x ? 1 : -1;
+        } else if (rope[j - 1].x == rope[j].x) {
+          //move vertically
+          if (Math.abs(rope[j - 1].y - rope[j].y) > 1)
+            rope[j].y += rope[j - 1].y > rope[j].y ? 1 : -1;
+        } else if (
+          Math.abs(rope[j - 1].y - rope[j].y) > 1 ||
+          Math.abs(rope[j - 1].x - rope[j].x) > 1
+        ) {
+          // move diagonally
           rope[j].y += rope[j - 1].y > rope[j].y ? 1 : -1;
-      } else if (
-        Math.abs(rope[j - 1].y - rope[j].y) == 1 &&
-        Math.abs(rope[j - 1].x - rope[j].x) == 1
-      ) {
-        continue;
-      } else {
-        rope[j].y += rope[j - 1].y > rope[j].y ? 1 : -1;
-        rope[j].x += rope[j - 1].x > rope[j].x ? 1 : -1;
+          rope[j].x += rope[j - 1].x > rope[j].x ? 1 : -1;
+        }
       }
+      // convert position to integer to store in a set
+      visited.add(rope.at(-1).y * 100_000 + rope.at(-1).x);
     }
-    if (debug) console.log(dist, rope);
-    part2.add(rope[9].y * 100_000 + rope[9].x);
   }
-  console.log("end", rope);
-  if (debug) break;
+  return visited.size;
 }
 
-console.log("#2:", part2.size);
+console.log("#1:", moveRope(2));
+console.log("#2:", moveRope(10));
