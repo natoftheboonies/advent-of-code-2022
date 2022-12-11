@@ -1,3 +1,4 @@
+`use strict;`;
 import { promises } from "fs";
 
 let sample = `Monkey 0:
@@ -29,74 +30,64 @@ Test: divisible by 17
   If false: throw to monkey 1`;
 
 let puzzle = sample;
-
 const dataBuf = await promises.readFile("input11");
 puzzle = dataBuf.toString();
 const input = puzzle.split("\n\n").filter((line) => Boolean(line));
 
-const monkeys = input.map((monkey) => {
-  const lines = monkey.split("\n");
-  const id = lines[0].match(/\d+/).at(0);
-  const items = new Array(...lines[1].matchAll(/\d+/g)).map((match) =>
-    Number(match[0])
-  );
-  const op = lines[2].charAt(lines[2].indexOf("old ") + 4);
-  let right = lines[2].substring(lines[2].indexOf("old ") + 6);
-  if (!isNaN(right)) right = Number(right);
-  const div = Number(lines[3].match(/\d+/).at(0));
-  const ifTrue = Number(lines[4].match(/\d+/).at(0));
-  const ifFalse = Number(lines[5].match(/\d+/).at(0));
-  return {
-    id,
-    items,
-    op,
-    right,
-    div,
-    ifTrue,
-    ifFalse,
-    inspected: 0,
-  };
-});
+const readMonkeys = (input) =>
+  input.map((monkey) => {
+    const lines = monkey.split("\n");
+    const items = [...lines[1].matchAll(/\d+/g)].map((match) =>
+      Number(match[0])
+    );
+    let right = lines[2].substring(lines[2].indexOf("old ") + 6);
+    if (!isNaN(right)) right = Number(right);
+    return {
+      id: lines[0].match(/\d+/).at(0),
+      items,
+      op: lines[2].charAt(lines[2].indexOf("old ") + 4),
+      right,
+      div: Number(lines[3].match(/\d+/).at(0)),
+      ifTrue: Number(lines[4].match(/\d+/).at(0)),
+      ifFalse: Number(lines[5].match(/\d+/).at(0)),
+      inspected: 0,
+    };
+  });
+
+function runPart(monkeys, rounds, reduceOp) {
+  for (let i = 0; i < rounds; i++) {
+    monkeys.forEach((monkey) => {
+      while (monkey.items.length > 0) {
+        let item = monkey.items.shift();
+        monkey.inspected++;
+        let right = monkey.right == "old" ? item : monkey.right;
+        if (monkey.op == "+") item += right;
+        else if (monkey.op == "*") item *= right;
+        item = reduceOp(item);
+        const target = item % monkey.div == 0 ? monkey.ifTrue : monkey.ifFalse;
+        monkeys[target].items.push(item);
+      }
+    });
+  }
+
+  let active = [...monkeys].sort((a, b) => b.inspected - a.inspected);
+  return active[0].inspected * active[1].inspected;
+}
+
+let monkeys = readMonkeys(input);
+console.log(
+  "#1:",
+  runPart(monkeys, 20, (item) => Math.floor(item / 3))
+);
+
+// part 2
+monkeys = readMonkeys(input);
 
 const allMonkeyDiv = monkeys
   .map((monkey) => monkey.div)
   .reduce((a, b) => a * b, 1);
 
-console.log("bigDiv", allMonkeyDiv);
-
-for (let i = 0; i < 10000; i++) {
-  monkeys.forEach((monkey) => {
-    //console.log("monkey", monkey.id);
-    while (monkey.items.length > 0) {
-      let item = monkey.items.shift();
-      //console.log("inspecting", item);
-      monkey.inspected++;
-      let level = item;
-      let right = item;
-      if (monkey.right != "old") right = monkey.right;
-      if (monkey.op == "+") level += right;
-      else if (monkey.op == "*") level *= right;
-      //console.log("worry", level);
-      //level = Math.floor(level / 3);
-      level %= allMonkeyDiv;
-      //level %= monkey.div;
-      //console.log("relax", level);
-      const target = level % monkey.div == 0 ? monkey.ifTrue : monkey.ifFalse;
-      //console.log("throwing to", target);
-      monkeys[target].items.push(level);
-    }
-    //console.log();
-  });
-}
-
-monkeys.forEach((monkey) =>
-  console.log(`Monkey ${monkey.id}: ${monkey.inspected}`)
+console.log(
+  "#2:",
+  runPart(monkeys, 10_000, (item) => item % allMonkeyDiv)
 );
-
-const active = [...monkeys].sort((a, b) => b.inspected - a.inspected);
-//active.forEach((m) => console.log(m.id, m.inspected));
-
-let part1 = active[0].inspected * active[1].inspected;
-console.log("#1:", part1);
-
-// part2 too high 20733120099
