@@ -30,8 +30,8 @@ Test: divisible by 17
 
 let puzzle = sample;
 
-// const dataBuf = await promises.readFile("input11");
-// puzzle = dataBuf.toString();
+const dataBuf = await promises.readFile("input11");
+puzzle = dataBuf.toString();
 const input = puzzle.split("\n\n").filter((line) => Boolean(line));
 
 const monkeys = input.map((monkey) => {
@@ -58,7 +58,13 @@ const monkeys = input.map((monkey) => {
   };
 });
 
-for (let i = 0; i < 20; i++) {
+const allMonkeyDiv = monkeys
+  .map((monkey) => monkey.div)
+  .reduce((a, b) => a * b, 1);
+
+console.log("bigDiv", allMonkeyDiv);
+
+for (let i = 0; i < 10000; i++) {
   monkeys.forEach((monkey) => {
     //console.log("monkey", monkey.id);
     while (monkey.items.length > 0) {
@@ -71,8 +77,9 @@ for (let i = 0; i < 20; i++) {
       if (monkey.op == "+") level += right;
       else if (monkey.op == "*") level *= right;
       //console.log("worry", level);
-      level = Math.floor(level / 3);
-      //level = level %= monkey.div;
+      //level = Math.floor(level / 3);
+      level %= allMonkeyDiv;
+      //level %= monkey.div;
       //console.log("relax", level);
       const target = level % monkey.div == 0 ? monkey.ifTrue : monkey.ifFalse;
       //console.log("throwing to", target);
@@ -82,9 +89,9 @@ for (let i = 0; i < 20; i++) {
   });
 }
 
-// monkeys.forEach((monkey) =>
-//   console.log(`Monkey ${monkey.id}: ${monkey.items}`)
-// );
+monkeys.forEach((monkey) =>
+  console.log(`Monkey ${monkey.id}: ${monkey.inspected}`)
+);
 
 const active = [...monkeys].sort((a, b) => b.inspected - a.inspected);
 //active.forEach((m) => console.log(m.id, m.inspected));
