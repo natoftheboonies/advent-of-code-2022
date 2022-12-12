@@ -45,7 +45,7 @@ const fromKey = (key) => [key % dim.col, Math.floor(key / dim.col)];
 
 // inspired by 2021 day 15
 function djikstra(
-  start = [0, 0],
+  start,
   goalTest = ([x, y]) => topo[y][x] == 26,
   validMove = ([x, y], [hx, hy]) => topo[y][x] - topo[hy][hx] <= 1
 ) {
@@ -81,7 +81,7 @@ function djikstra(
   console.error("goal not found");
 }
 
-console.log("#1:", djikstra());
+console.log("#1:", djikstra(start));
 
 // search from peak to low points
 const part2 = djikstra(
