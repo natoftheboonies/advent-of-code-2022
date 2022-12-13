@@ -28,12 +28,42 @@ let puzzle = sample;
 const dataBuf = await promises.readFile("input13");
 puzzle = dataBuf.toString();
 const pairs = puzzle.split("\n\n").filter((line) => Boolean(line));
-// cheat parse w/ JSON.parse (instead of eval)
+
+// replaces cheat parse w/ JSON.parse (instead of eval)
+const parseList = (input) => {
+  const list = [];
+
+  let queue = input.substring(1, input.length - 1).split("");
+  while (queue.length > 0) {
+    const cur = queue.shift();
+    if (isFinite(cur)) {
+      // number
+      let num = cur;
+      while (isFinite(queue[0])) {
+        num += queue.shift();
+      }
+      list.push(Number(num));
+    } else if (cur === "[") {
+      // construct sublist, parse recursively
+      let subList = cur;
+      let deep = 1;
+      while (deep > 0) {
+        const more = queue.shift();
+        if (more === "[") deep++;
+        if (more === "]") deep--;
+        subList += more;
+      }
+      list.push(parseList(subList));
+    } // else console.assert(cur === ",");
+  }
+  return list;
+};
+
 const comps = pairs.map((line) =>
   line
     .split("\n")
     .filter((line) => Boolean(line)) // blank line at end
-    .map((pkt) => JSON.parse(pkt))
+    .map((pkt) => parseList(pkt))
 );
 
 function compare(left, right) {
@@ -66,20 +96,14 @@ console.log("#1:", part1);
 
 // part2 sort all packets including divider packets
 let messages = comps.flat();
-messages.push([[2]]);
-messages.push([[6]]);
+const divider = [[[2]], [[6]]];
+messages.push(...divider);
 
 messages.sort((a, b) => compare(b, a));
 
 // find divider packets (1-indexed) and multiply locations
-let part2 = 1;
-messages.forEach((val, idx) => {
-  if (
-    typeof val == "object" &&
-    val.length == 1 &&
-    val[0].length == 1 &&
-    (val[0][0] == 2 || val[0][0] == 6)
-  )
-    part2 *= idx + 1;
-});
+const part2 = divider.reduce(
+  (acc, cur) => acc * (messages.indexOf(cur) + 1),
+  1
+);
 console.log("#2:", part2);
