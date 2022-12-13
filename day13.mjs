@@ -28,16 +28,19 @@ let puzzle = sample;
 const dataBuf = await promises.readFile("input13");
 puzzle = dataBuf.toString();
 const pairs = puzzle.split("\n\n").filter((line) => Boolean(line));
-// cheat parse w/ eval
-const comps = pairs.map((line) => line.split("\n").map((pkt) => eval(pkt)));
+// cheat parse w/ JSON.parse (instead of eval)
+const comps = pairs.map((line) =>
+  line
+    .split("\n")
+    .filter((line) => Boolean(line)) // blank line at end
+    .map((pkt) => JSON.parse(pkt))
+);
 
 function compare(left, right) {
   // if both values are integers
-  if (typeof left === "number" && typeof right === "number") {
-    if (left < right) return 1; // valid
-    else if (left > right) return -1; // invalid
-    return 0;
-  }
+  if (typeof left === "number" && typeof right === "number")
+    return right - left;
+
   // if exactly one is an integer
   if (typeof left === "number" && typeof right === "object") {
     left = [left];
@@ -46,19 +49,12 @@ function compare(left, right) {
   }
 
   // both values are lists
-  if (typeof left === "object" && typeof right === "object") {
-    for (let i = 0; i < Math.min(left.length, right.length); i++) {
-      const result = compare(left[i], right[i]);
-      if (result !== 0) return result;
-    }
-    // left ran out of values, valid
-    if (right.length > left.length) return 1;
-    // right ran out of values, invalid
-    else if (left.length > right.length) return -1;
+  for (let i = 0; i < Math.min(left.length, right.length); i++) {
+    const result = compare(left[i], right[i]);
+    if (result !== 0) return result;
   }
-
-  // same
-  return 0;
+  // ran out of values
+  return right.length - left.length;
 }
 
 // part1 add indices (start at 1) of pairs in the right order
