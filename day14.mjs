@@ -61,6 +61,7 @@ function drawCave() {
 }
 
 let abyss = dim[3];
+let part1;
 for (let u = 0; u < 3000; u++) {
   let sand = [500, 0];
   let rest = false;
@@ -78,9 +79,40 @@ for (let u = 0; u < 3000; u++) {
     if (sand[1] > abyss) break;
   }
   if (sand[1] > abyss) {
-    console.log("#1:", u);
+    part1 = u;
     break;
   }
   cave.set(`${sand[0]}-${sand[1]}`, "o");
 }
+console.log("#1:", part1);
+
+//drawCave();
+
+// part2
+dim[3] += 2;
+for (let u = 0; u < 300000; u++) {
+  let sand = [500, 0];
+  let rest = false;
+  while (!rest) {
+    if (sand[1] + 1 >= dim[3]) rest = true;
+    else if (!cave.has(`${sand[0]}-${sand[1] + 1}`)) sand[1]++;
+    else if (!cave.has(`${sand[0] - 1}-${sand[1] + 1}`)) {
+      sand[0]--;
+      sand[1]++;
+      dim[0] = Math.min(sand[0], dim[0]);
+    } else if (!cave.has(`${sand[0] + 1}-${sand[1] + 1}`)) {
+      sand[0]++;
+      sand[1]++;
+      dim[2] = Math.max(sand[0], dim[2]);
+    } else {
+      rest = true;
+    }
+  }
+  if (sand[1] == 0) {
+    console.log("#2:", part1 + u + 1);
+    break;
+  }
+  cave.set(`${sand[0]}-${sand[1]}`, "o");
+}
+
 //drawCave();
