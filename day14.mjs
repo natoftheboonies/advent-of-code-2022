@@ -6,14 +6,13 @@ const sample = `498,4 -> 498,6 -> 496,6
 503,4 -> 502,4 -> 502,9 -> 494,9`;
 
 let puzzle = sample;
-// const dataBuf = await promises.readFile("input13");
-// puzzle = dataBuf.toString();
+const dataBuf = await promises.readFile("input14");
+puzzle = dataBuf.toString();
 const lines = puzzle.split("\n").filter((line) => Boolean(line));
 const coords = lines.map((line) =>
   line.split(" -> ").map((pair) => pair.split(",").map((n) => Number(n)))
 );
 //mx,my,Mx,My
-console.log(coords.flat());
 let dim = coords
   .flat()
   .reduce(
@@ -29,8 +28,9 @@ let dim = coords
 console.log(dim);
 
 const cave = new Map();
+cave.set("500-0", "+");
 coords.forEach((coord) => {
-  console.log("plot", coord);
+  //console.log("plot", coord);
   let point = coord.shift();
   cave.set(`${point[0]}-${point[1]}`, "#");
   while (coord.length) {
@@ -50,4 +50,37 @@ coords.forEach((coord) => {
 });
 console.log("done");
 
-function drawCave() {}
+function drawCave() {
+  for (let y = dim[1]; y <= dim[3]; y++) {
+    let line = "";
+    for (let x = dim[0]; x <= dim[2]; x++) {
+      line += cave.get(`${x}-${y}`) ?? ".";
+    }
+    console.log(line);
+  }
+}
+
+let abyss = dim[3];
+for (let u = 0; u < 3000; u++) {
+  let sand = [500, 0];
+  let rest = false;
+  while (!rest) {
+    if (!cave.has(`${sand[0]}-${sand[1] + 1}`)) sand[1]++;
+    else if (!cave.has(`${sand[0] - 1}-${sand[1] + 1}`)) {
+      sand[0]--;
+      sand[1]++;
+    } else if (!cave.has(`${sand[0] + 1}-${sand[1] + 1}`)) {
+      sand[0]++;
+      sand[1]++;
+    } else {
+      rest = true;
+    }
+    if (sand[1] > abyss) break;
+  }
+  if (sand[1] > abyss) {
+    console.log("#1:", u);
+    break;
+  }
+  cave.set(`${sand[0]}-${sand[1]}`, "o");
+}
+//drawCave();
