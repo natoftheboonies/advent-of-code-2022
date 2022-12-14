@@ -12,6 +12,9 @@ const lines = puzzle.split("\n").filter((line) => Boolean(line));
 const coords = lines.map((line) =>
   line.split(" -> ").map((pair) => pair.split(",").map((n) => Number(n)))
 );
+
+const tap = [500, 0];
+
 //mx,my,Mx,My
 let dim = coords
   .flat()
@@ -22,67 +25,63 @@ let dim = coords
       Math.max(acc[2], cur[0]),
       Math.max(acc[3], cur[1]),
     ],
-    [500, 0, 500, 0]
+    [tap[0], tap[1], tap[0], tap[1]]
   );
 
-console.log(dim);
+//console.log(dim);
+
+const toKey = ([x, y]) => y * 10000 + x;
 
 const cave = new Map();
-cave.set("500-0", "+");
+cave.set(toKey(tap), "+");
 coords.forEach((coord) => {
-  //console.log("plot", coord);
   let point = coord.shift();
-  cave.set(`${point[0]}-${point[1]}`, "#");
+  cave.set(toKey(point), "#");
   while (coord.length) {
     const next = coord.shift();
     // calc vector
     let dx = Math.sign(next[0] - point[0]);
     let dy = Math.sign(next[1] - point[1]);
-    console.assert(Math.abs(dx) + Math.abs(dy) == 1);
     while (point[0] - next[0] + point[1] - next[1] != 0) {
       point[0] += dx;
       point[1] += dy;
-      //console.log(`${point[0]}-${point[1]}`);
-      cave.set(`${point[0]}-${point[1]}`, "#");
+      cave.set(toKey(point), "#");
     }
     point = next;
   }
 });
-console.log("done");
 
-function drawCave() {
+const drawCave = () => {
   for (let y = dim[1]; y <= dim[3]; y++) {
     let line = "";
     for (let x = dim[0]; x <= dim[2]; x++) {
-      line += cave.get(`${x}-${y}`) ?? ".";
+      line += cave.get(toKey([x, y])) ?? ".";
     }
     console.log(line);
   }
-}
+};
 
 let abyss = dim[3];
-let part1;
-for (let u = 0; u < 3000; u++) {
-  let sand = [500, 0];
+let part1 = 0;
+while (true) {
+  let sand = tap.slice();
   let rest = false;
-  while (!rest) {
-    if (!cave.has(`${sand[0]}-${sand[1] + 1}`)) sand[1]++;
-    else if (!cave.has(`${sand[0] - 1}-${sand[1] + 1}`)) {
+  while (!rest && sand[1] <= abyss) {
+    if (!cave.has(toKey([sand[0], sand[1] + 1]))) sand[1]++;
+    else if (!cave.has(toKey([sand[0] - 1, sand[1] + 1]))) {
       sand[0]--;
       sand[1]++;
-    } else if (!cave.has(`${sand[0] + 1}-${sand[1] + 1}`)) {
+    } else if (!cave.has(toKey([sand[0] + 1, sand[1] + 1]))) {
       sand[0]++;
       sand[1]++;
     } else {
       rest = true;
     }
-    if (sand[1] > abyss) break;
   }
-  if (sand[1] > abyss) {
-    part1 = u;
-    break;
-  }
-  cave.set(`${sand[0]}-${sand[1]}`, "o");
+  if (sand[1] > abyss) break;
+
+  cave.set(toKey(sand), "o");
+  part1++;
 }
 console.log("#1:", part1);
 
@@ -90,17 +89,19 @@ console.log("#1:", part1);
 
 // part2
 dim[3] += 2;
-for (let u = 0; u < 300000; u++) {
-  let sand = [500, 0];
+let part2 = part1; // resume
+while (true) {
+  part2++;
+  let sand = tap.slice();
   let rest = false;
   while (!rest) {
-    if (sand[1] + 1 >= dim[3]) rest = true;
-    else if (!cave.has(`${sand[0]}-${sand[1] + 1}`)) sand[1]++;
-    else if (!cave.has(`${sand[0] - 1}-${sand[1] + 1}`)) {
+    if (sand[1] + 1 == dim[3]) rest = true; // floor
+    else if (!cave.has(toKey([sand[0], sand[1] + 1]))) sand[1]++;
+    else if (!cave.has(toKey([sand[0] - 1, sand[1] + 1]))) {
       sand[0]--;
       sand[1]++;
       dim[0] = Math.min(sand[0], dim[0]);
-    } else if (!cave.has(`${sand[0] + 1}-${sand[1] + 1}`)) {
+    } else if (!cave.has(toKey([sand[0] + 1, sand[1] + 1]))) {
       sand[0]++;
       sand[1]++;
       dim[2] = Math.max(sand[0], dim[2]);
@@ -108,11 +109,8 @@ for (let u = 0; u < 300000; u++) {
       rest = true;
     }
   }
-  if (sand[1] == 0) {
-    console.log("#2:", part1 + u + 1);
-    break;
-  }
-  cave.set(`${sand[0]}-${sand[1]}`, "o");
+  if (sand[1] == tap[1]) break;
+  cave.set(toKey(sand), "o");
 }
 
-//drawCave();
+console.log("#2:", part2);
