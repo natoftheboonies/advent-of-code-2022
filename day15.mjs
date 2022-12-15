@@ -17,9 +17,14 @@ Sensor at x=16, y=7: closest beacon is at x=15, y=3
 Sensor at x=14, y=3: closest beacon is at x=15, y=3
 Sensor at x=20, y=1: closest beacon is at x=15, y=3`;
 
+let targetRow = 10;
+
 let puzzle = sample;
 const dataBuf = await promises.readFile("input15");
-puzzle = dataBuf.toString();
+if (true) {
+  targetRow = 2_000_000;
+  puzzle = dataBuf.toString();
+}
 const lines = puzzle.split("\n").filter((line) => Boolean(line));
 const coords = lines.map((line) =>
   [...line.matchAll(/-?\d+/g)].map((match) => Number(match[0]))
@@ -33,8 +38,6 @@ const sensors = coords.map((coord) => {
 
 const rowBeacons = new Set();
 
-const targetRow = 2_000_000;
-
 coords
   .filter(([sx, sy, bx, by]) => by == targetRow)
   .forEach(([sx, sy, bx, by]) => rowBeacons.add(bx));
@@ -42,19 +45,37 @@ console.log("beacon:", rowBeacons);
 
 const rowOverlap = new Set();
 
-const overlapRow10 = sensors.filter(
-  ([x, y, dist]) => Math.abs(targetRow - y) < dist
-);
+const overlapRow = sensors
+  .filter(([x, y, dist]) => Math.abs(targetRow - y) < dist)
+  .map(([x, y, dist]) => {
+    const vert = dist - Math.abs(targetRow - y);
+    return [x - vert, x + vert];
+  });
 
-overlapRow10.forEach(([x, y, dist]) => {
-  const vert = dist - Math.abs(targetRow - y);
-  for (let i = x - vert; i <= x + vert; i++) {
-    if (!rowBeacons.has(i)) rowOverlap.add(i);
+overlapRow.sort((a, b) => a[0] - b[0]);
+console.log("overlaps", overlapRow);
+
+const reducedOverlaps = [];
+overlapRow.forEach((range) => {
+  if (reducedOverlaps.length == 0) reducedOverlaps.push(range);
+  else {
+    let cur = reducedOverlaps.at(-1);
+    if (cur[1] >= range[0]) cur[1] = Math.max(cur[1], range[1]);
+    else reducedOverlaps.push(range);
   }
 });
+console.log("reduced", reducedOverlaps);
 
-//rowBeacons.forEach((b) => rowOverlap.delete(b));
+const part1 = reducedOverlaps.reduce(
+  (acc, range) => acc + range[1] - range[0] + 1,
+  0
+);
 
-console.log("#1:", rowOverlap.size);
+const b = [...rowBeacons].filter((b) =>
+  reducedOverlaps.some(([x1, x2]) => b >= x1 && b <= x2)
+).length;
+console.log("b", b);
+
+console.log("#1:", part1 - b);
 
 //console.log(foo[0]);
