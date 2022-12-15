@@ -65,16 +65,17 @@ function getOverlaps(targetRow) {
   return reducedOverlaps;
 }
 
-const reducedOverlaps = getOverlaps(targetRow);
+const overlaps = getOverlaps(targetRow);
 
-// filter beacons to those within targetRow
+// filter beacons to those within targetRow and some sensor range
 const relevantBeacons = beacons.filter(
   ([bx, by]) =>
-    by == targetRow && reducedOverlaps.some(([x1, x2]) => bx >= x1 && bx <= x2)
+    by == targetRow && overlaps.some(([x1, x2]) => bx >= x1 && bx <= x2)
 );
 
+// row overlap - beacons
 const part1 =
-  reducedOverlaps.reduce((acc, range) => acc + range[1] - range[0] + 1, 0) -
+  overlaps.reduce((acc, range) => acc + range[1] - range[0] + 1, 0) -
   relevantBeacons.length;
 
 console.log("#1:", part1);
@@ -82,12 +83,11 @@ console.log("#1:", part1);
 // part2, search (backwards, cuz it's a puzzle)
 function part2() {
   for (let i = searchMax; i >= 0; i--) {
-    const reducedOverlaps = getOverlaps(i);
-    if (reducedOverlaps.length > 1) {
-      return 4000000 * (reducedOverlaps[0][1] + 1) + i;
+    const overlaps = getOverlaps(i);
+    if (overlaps.length > 1) {
+      return 4000000 * (overlaps[0][1] + 1) + i;
     }
   }
-  return -1;
 }
 
 console.log("#2:", part2());
