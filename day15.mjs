@@ -18,11 +18,13 @@ Sensor at x=14, y=3: closest beacon is at x=15, y=3
 Sensor at x=20, y=1: closest beacon is at x=15, y=3`;
 
 let targetRow = 10;
+let searchMax = 20;
 
 let puzzle = sample;
 const dataBuf = await promises.readFile("input15");
 if (true) {
   targetRow = 2_000_000;
+  searchMax = 4_000_000;
   puzzle = dataBuf.toString();
 }
 const lines = puzzle.split("\n").filter((line) => Boolean(line));
@@ -36,46 +38,60 @@ const sensors = coords.map((coord) => {
   return [sx, sy, dist];
 });
 
-const rowBeacons = new Set();
+function getOverlaps(targetRow) {
+  const rowBeacons = new Set();
 
-coords
-  .filter(([sx, sy, bx, by]) => by == targetRow)
-  .forEach(([sx, sy, bx, by]) => rowBeacons.add(bx));
-console.log("beacon:", rowBeacons);
+  coords
+    .filter(([sx, sy, bx, by]) => by == targetRow)
+    .forEach(([sx, sy, bx, by]) => rowBeacons.add(bx));
+  //console.log("beacon:", rowBeacons);
 
-const rowOverlap = new Set();
+  const overlapRow = sensors
+    .filter(([x, y, dist]) => Math.abs(targetRow - y) < dist)
+    .map(([x, y, dist]) => {
+      const vert = dist - Math.abs(targetRow - y);
+      return [x - vert, x + vert];
+    });
 
-const overlapRow = sensors
-  .filter(([x, y, dist]) => Math.abs(targetRow - y) < dist)
-  .map(([x, y, dist]) => {
-    const vert = dist - Math.abs(targetRow - y);
-    return [x - vert, x + vert];
+  overlapRow.sort((a, b) => a[0] - b[0]);
+  //console.log("overlaps", overlapRow);
+
+  const reducedOverlaps = [];
+  overlapRow.forEach((range) => {
+    if (reducedOverlaps.length == 0) reducedOverlaps.push(range);
+    else {
+      let cur = reducedOverlaps.at(-1);
+      if (cur[1] >= range[0] - 1) cur[1] = Math.max(cur[1], range[1]);
+      else reducedOverlaps.push(range);
+    }
   });
+  //console.log("reduced", reducedOverlaps);
+  const relevantBeacons = [...rowBeacons].filter((b) =>
+    reducedOverlaps.some(([x1, x2]) => b >= x1 && b <= x2)
+  );
+  return [reducedOverlaps, relevantBeacons];
+}
 
-overlapRow.sort((a, b) => a[0] - b[0]);
-console.log("overlaps", overlapRow);
-
-const reducedOverlaps = [];
-overlapRow.forEach((range) => {
-  if (reducedOverlaps.length == 0) reducedOverlaps.push(range);
-  else {
-    let cur = reducedOverlaps.at(-1);
-    if (cur[1] >= range[0]) cur[1] = Math.max(cur[1], range[1]);
-    else reducedOverlaps.push(range);
-  }
-});
-console.log("reduced", reducedOverlaps);
+const [reducedOverlaps, relevantBeacons] = getOverlaps(targetRow);
 
 const part1 = reducedOverlaps.reduce(
   (acc, range) => acc + range[1] - range[0] + 1,
   0
 );
 
-const b = [...rowBeacons].filter((b) =>
-  reducedOverlaps.some(([x1, x2]) => b >= x1 && b <= x2)
-).length;
-console.log("b", b);
-
-console.log("#1:", part1 - b);
+console.log("#1:", part1 - relevantBeacons.length);
 
 //console.log(foo[0]);
+
+// part2, search!
+
+for (let i = searchMax; i >= 0; i--) {
+  const [reducedOverlaps, relevantBeacons] = getOverlaps(i);
+  if (reducedOverlaps.length > 1) {
+    //console.log(i, reducedOverlaps);
+    let part2 = 4000000 * (reducedOverlaps[0][1] + 1) + i;
+    console.log(part2);
+    break;
+  }
+  //console.log("search", i);
+}
