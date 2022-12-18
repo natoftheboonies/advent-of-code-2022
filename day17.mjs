@@ -62,7 +62,7 @@ function drawChamber() {
   console.log("+-------+");
 }
 
-function playTetris(gameover = 2022) {
+function playTetris(gameOver = 2022) {
   const toKey = ([x, y]) => y * 10 + x;
 
   // store settled rocks and top
@@ -71,14 +71,15 @@ function playTetris(gameover = 2022) {
 
   let i = 0;
   let jet = 0;
-  let heights = [];
-  let seen = new Map();
 
-  let tracking = false;
-  let trackingLevel = 0;
-  let tracks = [];
+  // track heights for cycle state and to replay cycles
+  const heights = [];
 
-  while (i < gameover) {
+  const seen = new Map();
+  // record [top, i] when in a cycle
+  let cycleStats = [];
+
+  while (i < gameOver) {
     const rock = pieces.at(i % 5);
     let pos = [2, top + 4];
     const priorTop = top;
@@ -113,6 +114,7 @@ function playTetris(gameover = 2022) {
       ) {
         pos[1] += dy;
       } else {
+        // settle rock in chamber
         rock.forEach(([x, y]) => {
           chamber.add(toKey([x + pos[0], y + pos[1]]));
           top = Math.max(top, y + pos[1]);
@@ -121,49 +123,45 @@ function playTetris(gameover = 2022) {
       }
     }
     i++;
+    // record heights for state detection
     heights.push(top - priorTop);
 
     if (heights.length > 30) {
+      // state is jet, block, last 30 heights
       const situation = `${jet % jets.length},${i % 5},${heights
         .slice(-30)
         .join(",")}`;
       if (seen.has(situation)) {
-        if (!tracking) {
-          tracks.push([top, i]);
-          trackingLevel = seen.get(situation);
-          tracking = true;
-        } else if (trackingLevel < seen.get(situation)) {
-          tracks.push([top, i]);
-          trackingLevel = seen.get(situation);
+        // we've been in this state before!
+        if (cycleStats.length == 0) {
+          // no stats yet, record height and block count
+          cycleStats.push([top, i]);
+        } else if (seen.get(situation) > 1) {
+          // we've cycled, record height and block count
+          const [startHeight, startBlocks] = cycleStats[0];
+
+          const cycleHeight = top - startHeight;
+          const cycleBlocks = i - startBlocks;
+
+          const mult = Math.floor((gameOver - startBlocks) / cycleBlocks);
+
+          // tail is a partial cycle
+          const tailBlocks = gameOver - mult * cycleBlocks - startBlocks;
+          const tailHeight = heights
+            .slice(startBlocks, startBlocks + tailBlocks)
+            .reduce((a, b) => a + b);
+
+          const calcTop = startHeight + mult * cycleHeight + tailHeight;
+          return calcTop + 1;
         }
         seen.set(situation, seen.get(situation) + 1);
       } else {
+        // record state for later comparison
         seen.set(situation, 1);
       }
     }
-    // prune set
-    for (const key of chamber) {
-      if (key / 10 + 50 < top) chamber.delete(key);
-    }
-    if (tracks.length > 1) {
-      // we have cycled!
-      const [startHeight, startBlocks] = tracks[0];
-
-      const cycleHeight = tracks[1][0] - startHeight;
-      const cycleBlocks = tracks[1][1] - startBlocks;
-
-      const mult = Math.floor((gameover - startBlocks) / cycleBlocks);
-
-      const tailBlocks = gameover - mult * cycleBlocks - startBlocks;
-      const tailHeight = heights
-        .slice(startBlocks, startBlocks + tailBlocks)
-        .reduce((a, b) => a + b);
-
-      const calcTop = startHeight + mult * cycleHeight + tailHeight;
-      return calcTop + 1;
-    }
   }
-  return top + 1;
+  return top + 1; // +1 because 0-indexed
 }
 
 console.log("#1:", playTetris());
