@@ -55,6 +55,10 @@ function play(blueprint, gameTime = 24) {
       maxGeo = geosByEnd;
     }
 
+    // #4 from https://www.reddit.com/r/adventofcode/comments/zpihwi/comment/j0tls7a/
+    const n = gameTime - state.min;
+    if (geosByEnd + (n * (n - 1)) / 2 <= maxGeo) continue;
+
     // onward
     state.min++;
 
