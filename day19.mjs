@@ -61,7 +61,8 @@ function play(blueprint, gameTime = 24) {
     // let's build a bot of each type, unless we can't or it takes too long
     for (let i = 0; i < 4; i++) {
       // unless we have enough of this bot (more than 1 + max resources <- found by trial & error)
-      if (state.resources[i] > maxCosts[i] + 1) continue;
+      if (state.bots[i] > maxCosts[i] || state.resources[i] > maxCosts[i] + 1)
+        continue;
 
       // find longest time to collect enough resources to build the bot
       let nextBotTime = 0;
@@ -90,8 +91,8 @@ function play(blueprint, gameTime = 24) {
             state.resources[j] -
             // what we spent building this bot
             (blueprint.costs[i][j] ?? 0) +
-            // what we gain in the duration
-            bot * (nextBotTime + 1)
+            // what we gain in the duration (this minute + extra time)
+            bot * (1 + nextBotTime)
         ),
         // same as before, plus our new bot
         bots: [...state.bots],
