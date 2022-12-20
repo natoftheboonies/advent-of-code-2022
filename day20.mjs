@@ -39,6 +39,8 @@ class Item {
       if (left > loop - 1) left = left % (loop - 1);
       //console.log("moving", this.val, "reverse", move);
       move = loop - 1 - left;
+    } else {
+      if (move > loop - 1) move = move % (loop - 1);
     }
 
     // a, b, c, d => a, c, b, d
@@ -136,5 +138,39 @@ part1();
 
 const key = 811589153;
 
+const stack = [];
+let current = new Item(signal.at(0) * key);
+const start = current;
+let zero;
+stack.push(current);
+signal.slice(1).forEach((val) => {
+  current = current.insert(val * key);
+  stack.push(current);
+  if (val === 0) zero = current;
+});
+// hook up the circle
+current.next = start;
+start.prior = current;
+const loop = stack.length;
+
 //stack.forEach((x) => (x.val *= key));
 //console.log("init", zero.printAll());
+for (let i = 0; i < 10; i++) {
+  let workingStack = stack.slice();
+  //console.log(current);
+  while (workingStack.length > 0) {
+    const moveMe = workingStack.shift();
+    //console.log("move", moveMe.val);
+    moveMe.move(loop);
+  }
+  //console.log("after", i + 1, ":", zero.printAll());
+}
+
+const targets = [1000, 2000, 3000].map((x) => x % loop);
+//console.log(targets);
+// console.log(
+//   "targets",
+//   targets.map((t) => zero.getIndex(t))
+// );
+const part2 = targets.reduce((a, t) => a + zero.getIndex(t), 0);
+console.log("#2:", part2); // 15950 too high
