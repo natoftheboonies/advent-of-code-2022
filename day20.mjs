@@ -14,11 +14,8 @@ class Item {
   prior;
   constructor(val) {
     this.val = val;
-    this.next = this;
   }
 
-  // a.insert(b) -> a
-  // a -> b -> a
   insert(val) {
     let priorNext = this.next;
     const inserted = new Item(val);
@@ -34,10 +31,10 @@ class Item {
 
   move(loop) {
     let move = this.val;
+    // reduce move by size of the list (loop - 1) excluding ourself
     if (this.val < 0) {
       let left = Math.abs(move);
       if (left > loop - 1) left = left % (loop - 1);
-      //console.log("moving", this.val, "reverse", move);
       move = loop - 1 - left;
     } else {
       if (move > loop - 1) move = move % (loop - 1);
@@ -59,24 +56,11 @@ class Item {
       this.prior = next; // c <- b
       next.next = this; // c -> b
     }
-    //this.status();
   }
 
   getIndex(count) {
     if (count === 0) return this.val;
     return this.next.getIndex(count - 1);
-  }
-
-  printAll() {
-    const result = [];
-    const start = this;
-    result.push(start.val);
-    let cur = this.next;
-    while (cur !== start) {
-      result.push(cur.val);
-      cur = cur.next;
-    }
-    return result;
   }
 }
 
@@ -91,86 +75,57 @@ const signal = puzzle
   .filter((line) => Boolean(line))
   .map((line) => Number(line));
 
-//console.log(signal);
-
-function part1() {
+function buildStack(mult = 1) {
   const stack = [];
-  let current = new Item(signal.at(0));
+  let current = new Item(signal.at(0) * mult);
   const start = current;
   let zero;
   stack.push(current);
   signal.slice(1).forEach((val) => {
-    current = current.insert(val);
+    current = current.insert(val * mult);
     stack.push(current);
     if (val === 0) zero = current;
   });
   // hook up the circle
   current.next = start;
   start.prior = current;
+  return [stack, zero];
+}
 
+function part1() {
+  const [stack, zero] = buildStack();
   const loop = stack.length;
 
-  // part 1
-
   let workingStack = stack.slice();
-  //console.log(current);
   while (workingStack.length > 0) {
     const moveMe = workingStack.shift();
-    //console.log("move", moveMe.val);
     moveMe.move(loop);
   }
 
-  //zero.status();
-  //console.log("fromZero:", zero.printAll());
-  //console.log("loop", loop);
   const targets = [1000, 2000, 3000].map((x) => x % loop);
-  //console.log(targets);
-  // console.log(
-  //   "targets",
-  //   targets.map((t) => zero.getIndex(t))
-  // );
   const part1 = targets.reduce((a, t) => a + zero.getIndex(t), 0);
-  console.log("#1:", part1); // 15950 too high
+  return part1;
 }
 
-part1();
-// part 2
+console.log("#1:", part1());
 
-const key = 811589153;
+function part2() {
+  const key = 811589153;
 
-const stack = [];
-let current = new Item(signal.at(0) * key);
-const start = current;
-let zero;
-stack.push(current);
-signal.slice(1).forEach((val) => {
-  current = current.insert(val * key);
-  stack.push(current);
-  if (val === 0) zero = current;
-});
-// hook up the circle
-current.next = start;
-start.prior = current;
-const loop = stack.length;
+  const [stack, zero] = buildStack(key);
+  const loop = stack.length;
 
-//stack.forEach((x) => (x.val *= key));
-//console.log("init", zero.printAll());
-for (let i = 0; i < 10; i++) {
-  let workingStack = stack.slice();
-  //console.log(current);
-  while (workingStack.length > 0) {
-    const moveMe = workingStack.shift();
-    //console.log("move", moveMe.val);
-    moveMe.move(loop);
+  for (let i = 0; i < 10; i++) {
+    let workingStack = stack.slice();
+    while (workingStack.length > 0) {
+      const moveMe = workingStack.shift();
+      moveMe.move(loop);
+    }
   }
-  //console.log("after", i + 1, ":", zero.printAll());
+
+  const targets = [1000, 2000, 3000].map((x) => x % loop);
+  const part2 = targets.reduce((a, t) => a + zero.getIndex(t), 0);
+  return part2;
 }
 
-const targets = [1000, 2000, 3000].map((x) => x % loop);
-//console.log(targets);
-// console.log(
-//   "targets",
-//   targets.map((t) => zero.getIndex(t))
-// );
-const part2 = targets.reduce((a, t) => a + zero.getIndex(t), 0);
-console.log("#2:", part2); // 15950 too high
+console.log("#2:", part2());
