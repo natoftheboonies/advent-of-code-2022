@@ -73,6 +73,7 @@ class Elf {
     this.x = x;
     this.y = y;
     this.myDirs = DIRS.slice();
+    this.moved = false;
   }
 
   propose(positions) {
@@ -86,6 +87,7 @@ class Elf {
       //console.log(`Elf ${toKey(this.x, this.y)} proposes staying put.`);
       this.nextPos = [this.x, this.y];
       this.myDirs.push(this.myDirs.shift());
+      this.moved = false;
       return;
     }
 
@@ -103,6 +105,7 @@ class Elf {
         // console.log(
         //   `Elf ${toKey(this.x, this.y)} proposes ${dir} to ${this.nextPos}`
         // );
+
         break;
       } else {
         //console.log(`Elf ${toKey(this.x, this.y)} blocked ${dir} `);
@@ -115,8 +118,13 @@ class Elf {
   }
 
   move() {
+    this.moved = false;
     if (this.nextPos) {
+      if (this.nextPos[0] !== this.x || this.nextPos[1] !== this.y) {
+        this.moved = true;
+      }
       [this.x, this.y] = this.nextPos;
+
       this.nextPos = undefined;
     }
     return toKey(this.x, this.y);
@@ -151,9 +159,10 @@ function showLayout(positions) {
 const elves = layout.map((pos) => new Elf(...pos));
 let positions = new Set(layout.map(([x, y]) => toKey(x, y)));
 
-let result = 0;
-for (let i = 0; i < 10; i++) {
-  console.log(i + 1);
+let part1 = 0;
+let part2 = 0;
+for (let i = 0; i < 30000; i++) {
+  //console.log(i + 1);
   // elves decide where they are going
   let dupeCheck = new Map();
   elves.forEach((elf) => {
@@ -172,7 +181,15 @@ for (let i = 0; i < 10; i++) {
   // elves move
   positions = new Set(elves.map((elf) => elf.move()));
 
-  result = showLayout(positions);
+  if (i === 10) {
+    part1 = showLayout(positions);
+  }
+  if (!elves.some((elf) => elf.moved)) {
+    part2 = i + 1;
+
+    break;
+  }
 }
 
-console.log("#1", result);
+console.log("#1", part1);
+console.log("#2", part2);
