@@ -181,7 +181,7 @@ for (let i = 0; i < 30000; i++) {
   // elves move
   positions = new Set(elves.map((elf) => elf.move()));
 
-  if (i === 10) {
+  if (i === 9) {
     part1 = showLayout(positions);
   }
   if (!elves.some((elf) => elf.moved)) {
