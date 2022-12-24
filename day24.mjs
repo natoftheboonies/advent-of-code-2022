@@ -38,7 +38,11 @@ const canyon = maze.map((row, y) =>
 const height = canyon.length;
 const width = canyon[0].length;
 
+const canyonCache = new Map();
+
 function nextCanyon(canyon, time) {
+  if (canyonCache.has(time)) return canyonCache.get(time);
+
   const canyonNew = new Array(height)
     .fill(0)
     .map((x) => new Array(width).fill(0));
@@ -59,6 +63,7 @@ function nextCanyon(canyon, time) {
         (canyon[down][x] & LOOKUP["^"]) !== 0 ? LOOKUP["^"] : 0;
     }
   }
+  canyonCache.set(time, canyonNew);
   return canyonNew;
 }
 
