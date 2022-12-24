@@ -2,14 +2,6 @@ import { promises } from "fs";
 import { MinQueue } from "heapify/heapify.mjs";
 // https://github.com/luciopaiva/heapify
 
-let sample0 = `#.#####
-#.....#
-#>....#
-#.....#
-#...v.#
-#.....#
-#####.#`;
-
 let sample = `#.######
 #>>.<^<#
 #.<..<<#
@@ -43,9 +35,6 @@ const canyon = maze.map((row, y) =>
     .map((c) => LOOKUP[c])
 );
 
-//console.log(entry, exit);
-//console.log(canyon);
-
 const height = canyon.length;
 const width = canyon[0].length;
 
@@ -61,7 +50,6 @@ function nextCanyon(canyon, time) {
       const right = (x + time) % width;
       const up = (y - (time % height) + height) % height;
       const down = (y + time) % height;
-      //console.log(left, right, up, down);
       canyonNew[y][x] +=
         (canyon[y][left] & LOOKUP[">"]) !== 0 ? LOOKUP[">"] : 0;
       canyonNew[y][x] +=
@@ -71,17 +59,14 @@ function nextCanyon(canyon, time) {
         (canyon[down][x] & LOOKUP["^"]) !== 0 ? LOOKUP["^"] : 0;
     }
   }
-  //console.log(time, canyonNew);
   return canyonNew;
 }
 
-//nextCanyon(canyon, 18);
-
 // ok, let's play!
-const pos = [entry, -1];
-const target = [exit, canyon.length];
+const start = [entry, -1];
+const goal = [exit, canyon.length];
 
-let yMult = width * 2;
+let yMult = width;
 
 // need integer keys, so use y*(yMult)+x
 const toKey = ([x, y], time) => {
@@ -89,7 +74,6 @@ const toKey = ([x, y], time) => {
   if (y === -1) {
     neg = -1;
     y *= neg;
-    //console.log("tk", y, neg);
   }
   return neg * (1e6 * time + y * yMult + x);
 };
@@ -105,18 +89,6 @@ const fromKey = (key) => {
   return [[x, y], time];
 };
 
-// console.log("foo");
-// let cases = [[0, -1], 4];
-// let result = toKey(...cases);
-// console.log(cases);
-// console.log(result);
-// console.log(fromKey(result));
-
-// console.log("maze bottom right:", width, height);
-// let result = toKey([4, 4], 4096);
-// console.log(result);
-// console.log(fromKey(result));
-
 const DIRS = [
   [1, 0],
   [0, 1],
@@ -127,18 +99,15 @@ const DIRS = [
 
 // inspired by 2022 day 12
 function djikstra(start, goal, time = 0) {
-  const shortest = new Map([start]);
-  const seen = new Set();
   const heap = new MinQueue(2048, [], [], Int32Array);
   const hStart = Math.abs(goal[0] - start[0]) + Math.abs(goal[1] - start[1]);
-  // time 0
-  const foo = toKey(start, time);
-  //console.log("foo", foo);
-  heap.push(foo, time + hStart);
-  seen.add(foo);
+
+  heap.push(toKey(start, time), time + hStart);
+
+  const shortest = new Map();
+  shortest.set(heap.peek(), 0);
 
   while (heap.size) {
-    //const base_cost = heap.peekPriority();
     const last = heap.pop();
     const [[hx, hy], time] = fromKey(last);
     //console.log("at time", time, "checking", hx, hy);
@@ -149,32 +118,17 @@ function djikstra(start, goal, time = 0) {
 
     if (hx >= width || hx < 0 || hy > height || hy < -1) continue;
     const canyonNext = nextCanyon(canyon, time + 1);
-    //console.log(canyonNext);
 
     for (const [dx, dy] of DIRS) {
-      //    DIRS.forEach(([dx, dy]) => {
       const x = hx + dx;
       const y = hy + dy;
 
-      if (x == goal[0] && y == goal[1]) {
-        //console.log("GOAL");
-        return time + 1;
-      }
-      // out of bounds, and already checked goal
+      // out of bounds
       if (x >= width || x < 0 || y > height || y < -1) continue;
-
       if (y === start[1] && x !== start[0]) continue;
       if (y === goal[1] && x != goal[0]) continue;
       // no moving into blizzard
-      // if (time === 1) {
-      //   console.log("row", canyonNext[y], x, canyonNext[y][0]);
-      //   console.log(canyonNext);
-      // }
       if (y > -1 && y < canyonNext.length && canyonNext[y][x] > 0) continue;
-
-      //if (y < -1)
-      //console.log("valid");
-      //console.log("moves", x, y);
 
       const key = toKey([x, y], time + 1);
       // new cost for this node
@@ -185,21 +139,16 @@ function djikstra(start, goal, time = 0) {
         heap.push(key, neighbor_cost);
       }
     }
-    //break;
   }
   console.error("goal not found");
-  // console.log(shortest);
 }
 
-console.log("start", pos);
-console.log("goal", target);
+let part1 = djikstra(start, goal);
+console.log("#1:", part1);
 
-let part1 = djikstra(pos, target);
-console.log("#1", part1);
-
-let snackRun = djikstra(target, pos, part1);
+let snackRun = djikstra(goal, start, part1);
 //console.log("snackRun", snackRun - part1);
 
-let part2 = djikstra(pos, target, snackRun);
+let part2 = djikstra(start, goal, snackRun);
 //console.log("returnTrip", part2 - snackRun);
-console.log("#2:", part2); // 845 low
+console.log("#2:", part2);
