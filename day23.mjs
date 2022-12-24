@@ -84,36 +84,26 @@ class Elf {
         return !positions.has(toKey(cx, cy));
       })
     ) {
-      //console.log(`Elf ${toKey(this.x, this.y)} proposes staying put.`);
-      this.nextPos = [this.x, this.y];
-      this.myDirs.push(this.myDirs.shift());
       this.moved = false;
-      return;
-    }
-
-    for (let i = 0; i < 4; i++) {
-      const dir = this.myDirs[i];
-      //console.log("look", dir);
-      if (
-        LOOK[dir].every(([dx, dy]) => {
-          const [cx, cy] = [this.x + dx, this.y + dy];
-          return !positions.has(toKey(cx, cy));
-        })
-      ) {
-        const [dx, dy] = LOOK[dir][1];
-        this.nextPos = [this.x + dx, this.y + dy];
-        // console.log(
-        //   `Elf ${toKey(this.x, this.y)} proposes ${dir} to ${this.nextPos}`
-        // );
-
-        break;
-      } else {
-        //console.log(`Elf ${toKey(this.x, this.y)} blocked ${dir} `);
+    } else {
+      for (let i = 0; i < 4; i++) {
+        const dir = this.myDirs[i];
+        if (
+          LOOK[dir].every(([dx, dy]) => {
+            const [cx, cy] = [this.x + dx, this.y + dy];
+            return !positions.has(toKey(cx, cy));
+          })
+        ) {
+          const [dx, dy] = LOOK[dir][1];
+          this.nextPos = [this.x + dx, this.y + dy];
+          break;
+        }
       }
     }
     if (!this.nextPos) {
       this.nextPos = [this.x, this.y];
     }
+    // the first direction considered goes to the end.
     this.myDirs.push(this.myDirs.shift());
   }
 
@@ -144,15 +134,19 @@ function showLayout(positions) {
     },
     { x1: Infinity, x2: -Infinity, y1: Infinity, y2: -Infinity }
   );
+  const area =
+    (limits.x2 - limits.x1 + 1) * (limits.y2 - limits.y1 + 1) - positions.size;
+  return area;
+  console.log(area);
   for (let y = limits.y1; y <= limits.y2; y++) {
     let show = "";
     for (let x = limits.x1; x <= limits.x2; x++) {
       show += positions.has(toKey(x, y)) ? "#" : ".";
       if (!positions.has(toKey(x, y))) count++;
     }
-    console.log(show);
+    //console.log(show);
   }
-  console.log();
+  //console.log();
   return count;
 }
 
@@ -161,10 +155,9 @@ let positions = new Set(layout.map(([x, y]) => toKey(x, y)));
 
 let part1 = 0;
 let part2 = 0;
-for (let i = 0; i < 30000; i++) {
-  //console.log(i + 1);
+for (let i = 0; i < 10000; i++) {
   // elves decide where they are going
-  let dupeCheck = new Map();
+  let dupeCheck = new Map(); // replace https://www.reddit.com/r/adventofcode/comments/zt6xz5/comment/j1dq8oj/?utm_source=reddit&utm_medium=web2x&context=3
   elves.forEach((elf) => {
     elf.propose(positions);
     const key = toKey(...elf.nextPos);
@@ -184,9 +177,8 @@ for (let i = 0; i < 30000; i++) {
   if (i === 9) {
     part1 = showLayout(positions);
   }
-  if (!elves.some((elf) => elf.moved)) {
+  if (elves.every((elf) => !elf.moved)) {
     part2 = i + 1;
-
     break;
   }
 }
