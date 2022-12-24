@@ -56,14 +56,13 @@ const limits = cubes.reduce(
 
 //console.log(limits);
 
+const isCube = (x, y, z) =>
+  cubes.some(([tx, ty, tz]) => tx == x && ty == y && tz == z);
+
 let sum = 0;
 cubes.forEach(([cx, cy, cz]) =>
   sides.forEach(([ex, ey, ez]) => {
-    if (
-      !cubes.some(
-        ([tx, ty, tz]) => tx == cx + ex && ty == cy + ey && tz == cz + ez
-      )
-    ) {
+    if (!isCube(cx + ex, cy + ey, cz + ez)) {
       sum++;
     }
   })
@@ -91,21 +90,21 @@ while (queue.length > 0) {
 
     // except not too far out of bounds
     if (
-      tx < -1 ||
-      ty < -1 ||
-      tz < -1 ||
+      tx < limits.x[0] - 1 ||
+      ty < limits.y[0] - 1 ||
+      tz < limits.z[0] - 1 ||
       tx > limits.x[1] + 1 ||
       ty > limits.y[1] + 1 ||
       tz > limits.z[1] + 1
     )
       return;
 
-    if (cubes.some(([cx, cy, cz]) => cx == tx && cy == ty && cz == tz)) {
+    if (isCube(tx, ty, tz)) {
       // if we are next to a cube, we are an exposed edge
       sum++;
-      return;
+    } else {
+      queue.push([tx, ty, tz]);
     }
-    queue.push([tx, ty, tz]);
   });
 }
 
