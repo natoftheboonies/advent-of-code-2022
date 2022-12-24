@@ -78,10 +78,10 @@ function nextCanyon(canyon, time) {
 //nextCanyon(canyon, 18);
 
 // ok, let's play!
-let pos = [entry, -1];
+const pos = [entry, -1];
 const target = [exit, canyon.length];
 
-let yMult = width + 1;
+let yMult = width * 2;
 
 // need integer keys, so use y*(yMult)+x
 const toKey = ([x, y], time) => {
@@ -126,15 +126,15 @@ const DIRS = [
 ];
 
 // inspired by 2022 day 12
-function djikstra(start, goal) {
+function djikstra(start, goal, time = 0) {
   const shortest = new Map([start]);
   const seen = new Set();
   const heap = new MinQueue(2048, [], [], Int32Array);
   const hStart = Math.abs(goal[0] - start[0]) + Math.abs(goal[1] - start[1]);
   // time 0
-  const foo = toKey(start, 0);
+  const foo = toKey(start, time);
   //console.log("foo", foo);
-  heap.push(foo, 0 + hStart);
+  heap.push(foo, time + hStart);
   seen.add(foo);
 
   while (heap.size) {
@@ -147,6 +147,7 @@ function djikstra(start, goal) {
       return time;
     }
 
+    if (hx >= width || hx < 0 || hy > height || hy < -1) continue;
     const canyonNext = nextCanyon(canyon, time + 1);
     //console.log(canyonNext);
 
@@ -156,21 +157,24 @@ function djikstra(start, goal) {
       const y = hy + dy;
 
       if (x == goal[0] && y == goal[1]) {
-        console.log("GOAL");
+        //console.log("GOAL");
         return time + 1;
       }
       // out of bounds, and already checked goal
-      if (x >= width || x < 0 || y >= height || y < -1) continue;
-      if (hx >= width || hx < 0 || hy >= height || hy < -1) continue;
-      if (y === -1 && x !== 0) continue;
+      if (x >= width || x < 0 || y > height || y < -1) continue;
+
+      if (y === start[1] && x !== start[0]) continue;
+      if (y === goal[1] && x != goal[0]) continue;
       // no moving into blizzard
       // if (time === 1) {
-      //   console.log("checking", x, y, "->", canyonNext[y][x]);
       //   console.log("row", canyonNext[y], x, canyonNext[y][0]);
       //   console.log(canyonNext);
       // }
-      if (y > -1 && canyonNext[y][x] > 0) continue;
+      if (y > -1 && y < canyonNext.length && canyonNext[y][x] > 0) continue;
+
+      //if (y < -1)
       //console.log("valid");
+      //console.log("moves", x, y);
 
       const key = toKey([x, y], time + 1);
       // new cost for this node
@@ -192,3 +196,10 @@ console.log("goal", target);
 
 let part1 = djikstra(pos, target);
 console.log("#1", part1);
+
+let snackRun = djikstra(target, pos, part1);
+//console.log("snackRun", snackRun - part1);
+
+let part2 = djikstra(pos, target, snackRun);
+//console.log("returnTrip", part2 - snackRun);
+console.log("#2:", part2); // 845 low
